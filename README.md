@@ -68,3 +68,13 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+## About the Structure and Artechture
+
+### folder strructure & File Structure
+- This is a boilerplate with the methodology Atomic Design pattern.
+Here we are setup atoms, molecules, organisms, templates and pages are created inside components. Each atoms components like Buttons has its own styles, test and component file.
+
+
+
