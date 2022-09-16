@@ -1,0 +1,46 @@
+import { beforeAll, afterEach, afterAll } from '@jest/globals';
+import { rest } from 'msw'
+import { setupServer } from 'msw/node'
+// required to implement fetch within node tests
+global.fetch = require('node-fetch');
+const signInEndpoint = "http://localhost:8080/api/v1/auth/login"
+const successBody = {
+    "query": null,
+    "result": {
+        "ChallengeParameters": {},
+        "AuthenticationResult": {
+            "AccessToken": "eyJraWQiOiIzRnpweHZRWHNNV1luOXk4d1QzNTVxUDk5VmFRMzBcL2NwZkVjbDVQQndmZz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIwMTE3MDdjZC03Y2M1LTQwNDMtYjg1Yi1lNzU5ZWRiZTZhMGMiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9pUkdiM0lLUHAiLCJjbGllbnRfaWQiOiI3bnM5bWdkYWkzdnM1ZjZxcDZtdWhsMHZ1OSIsIm9yaWdpbl9qdGkiOiI4N2U2OGE0OS01ZGE3LTQ4NGEtODUyNS1mYTljODE0MTcyOGMiLCJldmVudF9pZCI6IjZlMDA0NTIwLWMzMTctNGY3NC04YzNkLThhYmM1YWExMzg1YSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE2NTY1NTk2NjQsImV4cCI6MTY1NjU2MzI2NCwiaWF0IjoxNjU2NTU5NjY0LCJqdGkiOiI3OGFlNWUxNS05NDA4LTQ4MWUtYTI0Mi1iMDM2MjUzZTU4MTciLCJ1c2VybmFtZSI6IjAxMTcwN2NkLTdjYzUtNDA0My1iODViLWU3NTllZGJlNmEwYyJ9.Uv9NScTkx1n3AJ8MQzr7ZZ-DLqj5eagwIyRAewtX7xQqqMRP1xnwpy95BfeJKM8_hNkd1URkljls80x2yG5g1nJKelOKyiIDjh0UqJqNHFVOLGrdeC83QNLQ1UcKuxOf4fH9j4GWMIOFcs_UD_PErKJsZzOwwN5Luiq6VzZ463_qSCaBEhwFlu3qD8hfdQZjOBV9JV45TpBTw8LozmGTNGYfBkqhQKWzz3h6YGM7loUKLSLumvKk6ZqmqxCX08Au0-tzkJzTOhOzkHNsgvXN-JaE8Eow6QH1yK4XqdBnNDL1AGfUQIOXKwgxx9y9_tNHBel1CFWqAzIMIkTdavnFLg",
+            "ExpiresIn": 3600,
+            "TokenType": "Bearer",
+            "RefreshToken": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.aRbPRz_3YFePMzjTOFCtZqLC9I41zwXKAYjrKXFA1MuoJuNwYpXsh_fP02VNwJU51dezmW10Nv80bavfVMXv8u4bQy9pEbCcYxbm38XMg-ymC5ARuv3_p1uPcAtklLbj-HAk7KDaUuwYnrctyFxcjGgm3mn0FPv1K2QxkdaZFgm89040MyIC231Wvgaue6EZlhIAhznZZ6TBN4W29Tg7pha2FC3mMoBVBiGSOhqNj6pohoUg-t2SE0Tg8mFU0ouNZaNxO8FvVZUlO3_xK6fmDbMfry2Hfj9EzDcgO2IVNLutq8LWddQ7XHm_16jq3sC5vy_6NzNfaNYBYMt-OhpNVg.r3hNSGyNom10qPp5.Ci056E3EH4L2ipqZOe6liRuIaaXJNyFVQDtfF70zkKX8ekQfeW2jjsmldfG3T4dvt__AbjV6qV5qDhuBPIHAf-wkvEF37NkSlqGoTHOqL9NtItco4bAaL6bZpFT83qgCc3_a1tsMK7xRFMZSpLOCGdwW660rRzWC4h8Uum57648yNe5dlBYu3-VLrZP4Q4dxnsg9qyPJTtwS-Cw86uyEHmhho6sLF-CAIYzkaLd_K-94_RHQCd6MQYdomDCgqRwEXv6JNYHxmonTHGbRC9SQrln464ORySf6HnGrpsa8Ondo22wU_ufiUhZQrS59_QiFCvXefOB1n8PzBJ27ftRGNZYBwAivCVWGTxghgwQtpBaqBXlZ0LaHczSDBPPnIHsSsRnS2crqz31E3OigrwDBKqJuzs8ACP0UUUGlwAanfBxsiUYyJp_ktdBiVvllHcrEW5EesslEM9laWsFVuPoYaudYr6j5MDUuo7E1KI5K20rGm-Wt_EcJfaYp1kohyIgnPZ8aufs_UlDpLjr56zJ_5no7UZ-yzhMM7mUaRQm_kJLShR9xGYMqdvF81hz0E8Xw4jmnH9J8_yoVvlR2lWpKz7CzJoG9lY1Kdc-zF7oPfYjN7yIOk_wV_XNH3p6PkS4eQR-fyp_mbgactxQivf4Ykh2-W49tFmUiPpgXdKS2a2qEdBX2Sr3pQdmQP_2SdEbYrQUhY22BDfolB4IybQ_NiuFLitjoJdN8_vqBzuaybFtqxmVwbstfPT4OwGh9Wh6lcWgBerxXNbZ42REolNsp0D7umq2aILdTby4pYrvWkRFrpMNX9nO6E8ekx2lZ4QZTO_0MuJypmyngim2SEAKX8Ojvl2QctFRUK-U7ILLPkT05PhXqjB6Bxi3oIwe5qUdk0ZNJ1LsqEZfW8VNPRZ2Bs8x5nvug_t0OajOTe-v3k0opFrzqmbCzArISMxP2rHdrqG15Rm9d0nQq5GQ3fpd6bsOBJv8dWBKZPGehZm9uXJl7LNkE2UsL4uGjiJTM0XFjz6xTR-fMDM5wBkfzfUAQQLdI-lvNYy0XbbD-O7CdbO0Y2V8i0nj0-QRCC0lXfmpaKANruVwCxbQ8LxJY8PqZ28nI5CKEyRkWFTvT9I4LSEDlqS63fQb5f7epHamN8_tgwg39gx5JtZ8y58fvDfzRmq0pOJMod3GXHSMVLOHmp2S3VrmKZRmF2PblC2nMihiGnIaqfMm4IY9f0XJyv23Ixnhix-tUVHSa7STxM992GzeZ5MKj_KZUm1nxiBEe9QOzv9x6DkHkVpteDyR17kb6le2AmiQCfCafKlA0obmBeyizmHJ7l2huwxQ2g14.ssvSrpRHnXwSarxv_jV4fg",
+            "IdToken": "eyJraWQiOiJwb0UxNVBrS0p2aWF6ekx3UzFvV0NrZGdIUmg0eVlScTV3bFl3M0J6dlljPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwMTE3MDdjZC03Y2M1LTQwNDMtYjg1Yi1lNzU5ZWRiZTZhMGMiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfaVJHYjNJS1BwIiwiY29nbml0bzp1c2VybmFtZSI6IjAxMTcwN2NkLTdjYzUtNDA0My1iODViLWU3NTllZGJlNmEwYyIsIm9yaWdpbl9qdGkiOiI4N2U2OGE0OS01ZGE3LTQ4NGEtODUyNS1mYTljODE0MTcyOGMiLCJhdWQiOiI3bnM5bWdkYWkzdnM1ZjZxcDZtdWhsMHZ1OSIsImV2ZW50X2lkIjoiNmUwMDQ1MjAtYzMxNy00Zjc0LThjM2QtOGFiYzVhYTEzODVhIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE2NTY1NTk2NjQsImV4cCI6MTY1NjU2MzI2NCwiaWF0IjoxNjU2NTU5NjY0LCJqdGkiOiIzMzk2MmQ3Ny02OGJkLTQxYzQtYmQ1Yi00NTllY2UzMjczNjUiLCJlbWFpbCI6ImF5dXNoLmdhdXJAY29kdm8uYWkifQ.1ztkRvRGvydYyehwSMpNY5HpLuHKCbQJAsims3O29W8vqi0zjjWMUCDVbomSMg5dvx5Y9PxJgXNeRREZKJb3rww5bV-DnvXIwajgpib639c3Oo4MDgztEPFQYrCXPQfR1Dpn2yXGDQMVlmcYF-LmA34NjkvpOS3ozfvkS83AMvphHImJgRE2u5WlmUBT1zeR61LPNY5lp7kYTkHHPmso1_OA1uo_L5_Dp1ubCCdk98TkO7PoZvqp1NCSIgWMOjQ2elyo-yvk2U2RmhB15bFzdMz12Kev1qwvRWEGxP-lRdUl5a9PHLaXEZhzD4mrzOcFKxh1madBy6brt023NI7KoA"
+        }
+    },
+    "error": null,
+    "totalResults": null,
+    "pageNo": null,
+    "message": "Login Successful"
+}
+
+export const server = setupServer(
+    // Describe the requests to mock.
+    rest.post(signInEndpoint, (req, res, ctx) => {
+        return res(
+            ctx.json(successBody),
+        )
+    }),
+)
+
+
+// Establish API mocking before all tests.
+beforeAll(() => server.listen());
+
+// Reset any request handlers that we may add during the tests,
+// so they don't affect other tests.
+afterEach(() => server.resetHandlers());
+
+// Clean up after the tests are finished.
+afterAll(() => {
+    server.close();
+});
+
