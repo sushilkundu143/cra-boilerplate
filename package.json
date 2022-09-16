@@ -18,7 +18,11 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "coverage": "jest --coverage",
+    "eslint:fix": "eslint . --ext .ts --fix",
+    "verify": "eslint . && jest --coverage",
+    "clean": "rmdir /s node_modules && del package-lock.json",
   },
   "eslintConfig": {
     "extends": [
@@ -40,5 +44,43 @@
   },
   "devDependencies": {
     "husky": "^8.0.1"
+  },
+  "jest": {
+    "preset": "@testing-library/react-native",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest/setup.js",
+      "./_mocks_/animationMock.js"
+    ],
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect",
+      "./jest/setupTests.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 35,
+        "functions": 20,
+        "lines": 50,
+        "statements": 50
+      }
+    },
+    "moduleNameMapper": {
+      "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/_mocks_/fileMock.js",
+      "\\.(css|less)$": "<rootDir>/_mocks_/fileMock.js"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?@?react-native|@react-native-community|@react-navigation|(?!@zelio/native-cui/))"
+    ],
+    "modulePathIgnorePatterns": [
+      "__mocks__"
+    ]
   }
 }
